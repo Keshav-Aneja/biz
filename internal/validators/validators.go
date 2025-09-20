@@ -37,14 +37,6 @@ func ValidateModuleName(requestedModule string) (string, string, error) {
 		// Case: "module@"
 		return moduleName, "latest", nil
 	}
-	//We can create support for these package versions later on
-	moduleVersion = strings.ReplaceAll(moduleVersion, "~", "")
-	moduleVersion = strings.ReplaceAll(moduleVersion, "^", "")
-
-	InvalidModuleVersion := strings.Contains(moduleVersion,"x")
-	if InvalidModuleVersion {
-		return moduleName, "latest", nil
-	}
 	// Case: "module@version"
 	return moduleName, moduleVersion, nil
 }

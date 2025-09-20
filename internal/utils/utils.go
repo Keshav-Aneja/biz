@@ -57,14 +57,14 @@ func removeDirectory(dest string) error {
 		return err
 	}
 	// If no more tarballs are there then we remove the directory
-	dir, err := os.ReadDir(constants.Directories.TEMPORARY)
-	if err != nil {
-		return err
-	}
+	// dir, err := os.ReadDir(constants.Directories.TEMPORARY)
+	// if err != nil {
+	// 	return err
+	// }
 
-	if len(dir) == 0 {
-		return os.Remove(constants.Directories.TEMPORARY)
-	}
+	// if len(dir) == 0 {
+	// 	return os.Remove(constants.Directories.TEMPORARY)
+	// }
 	return nil
 }
 
@@ -76,11 +76,10 @@ func removeDirectory(dest string) error {
 */
 func Extract(moduleName string) error {
 	tgzPath := constants.Directories.TEMPORARY + "/" + moduleName
-	dest := constants.Directories.BIZ_MODULES + "/" + moduleName 
+	dest := constants.Directories.BIZ_MODULES + "/" + moduleName
 	//Setup the directories for extracting
-	err := setupDirectory(dest)
-	if err != nil {
-		return fmt.Errorf("error setting up directories %w",err)
+	if err := setupDirectory(dest); err != nil {
+		return fmt.Errorf("error setting up directories %w", err)
 	}
 
 	file, err := os.Open(tgzPath)
@@ -91,11 +90,12 @@ func Extract(moduleName string) error {
 
 	uncompressedStream, err := gzip.NewReader(file)
 	if err != nil {
-		return fmt.Errorf("extracting tarGz failed: %w",err)
+		return fmt.Errorf("extracting tarGz failed: %w", err)
 	}
 	defer uncompressedStream.Close()
 
 	tarReader := tar.NewReader(uncompressedStream)
+	createdDirs := make(map[string]bool)
 
 	for {
 		header, err := tarReader.Next()
@@ -104,7 +104,7 @@ func Extract(moduleName string) error {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("extracting tarGz: Next() failed %w",err)
+			return fmt.Errorf("extracting tarGz: Next() failed %w", err)
 		}
 
 		parts := strings.Split(header.Name, "/")
@@ -112,12 +112,19 @@ func Extract(moduleName string) error {
 
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := os.MkdirAll(target, 0755); err != nil {
-				return fmt.Errorf("mkdir %s failed: %w", target, err)
+			if !createdDirs[target] {
+				if err := os.MkdirAll(target, 0755); err != nil {
+					return fmt.Errorf("mkdir %s failed: %w", target, err)
+				}
+				createdDirs[target] = true
 			}
 		case tar.TypeReg:
-			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
-				return fmt.Errorf("mkdir %s failed: %w", filepath.Dir(target), err)
+			dir := filepath.Dir(target)
+			if !createdDirs[dir] {
+				if err := os.MkdirAll(dir, 0755); err != nil {
+					return fmt.Errorf("mkdir %s failed: %w", dir, err)
+				}
+				createdDirs[dir] = true
 			}
 
 			outFile, err := os.Create(target)
@@ -134,5 +141,6 @@ func Extract(moduleName string) error {
 		}
 	}
 
-	return removeDirectory(tgzPath)
+	defer removeDirectory(tgzPath)
+	return nil
 }
