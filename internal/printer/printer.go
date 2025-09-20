@@ -9,9 +9,9 @@ import (
 
 
 var (
-	success = color.New(color.FgGreen).Add(color.Bold).SprintFunc()
-	warning = color.New(color.FgYellow).Add(color.Bold).SprintFunc()
-	error   = color.New(color.FgRed).Add(color.Bold).SprintFunc()
+	success = color.New(color.FgGreen).SprintFunc()
+	warning = color.New(color.FgYellow).SprintFunc()
+	error   = color.New(color.FgRed).SprintFunc()
 	info    = color.New(color.FgWhite).SprintFunc()
 )
 

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/Keshav-Aneja/biz/internal/utils"
+	"github.com/Keshav-Aneja/biz/internal/validators"
 )
 
 var REGISTRY_URL = "https://registry.npmjs.org/"
@@ -41,11 +44,9 @@ func GetModuleDetails(moduleName string) (*ModuleInfo) {
 	return &module
 }
 
-func GetModuleVersionDetails(moduleName string, latest bool) (*ModuleVersionInfo) {
-	path := moduleName
-	if latest {
-		path += "/latest"
-	}
+func GetModuleVersionDetails(moduleName string, version string) (*ModuleVersionInfo) {
+	path := moduleName + "/" + version
+	
 	moduleDetails := fetchFromRegistry(path)
 
 	var module ModuleVersionInfo
@@ -56,4 +57,39 @@ func GetModuleVersionDetails(moduleName string, latest bool) (*ModuleVersionInfo
 	}
 
 	return &module
+}
+
+
+func ResolveModule(requestedModule string) error {
+	fmt.Println(requestedModule)
+	moduleName, version, err := validators.ValidateModuleName(requestedModule)
+	if err != nil {
+		return err;
+	}
+
+	module := GetModuleVersionDetails(moduleName, version)
+	tarball := module.Dist.Tarball
+
+	err = utils.Download(module.Name, tarball)
+	if err != nil {
+		return fmt.Errorf("%s", "Error downloading the module"  + err.Error())
+	}
+
+	err = utils.Extract(module.Name)
+	if err != nil {
+		return fmt.Errorf("%s", "Error extracting the module " + err.Error())
+	}
+
+	dependencies, err := utils.ReadDependencies(module.Name)
+	if err != nil {
+		return err;
+	}
+
+
+	for _, module := range dependencies {
+		// fmt.Println(module)
+		ResolveModule(module)
+	}
+
+	return nil
 }

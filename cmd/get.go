@@ -3,7 +3,6 @@ package cmd
 import (
 	"github.com/Keshav-Aneja/biz/internal/printer"
 	"github.com/Keshav-Aneja/biz/internal/registry"
-	"github.com/Keshav-Aneja/biz/internal/validators"
 	"github.com/spf13/cobra"
 )
 
@@ -29,15 +28,13 @@ dependencies, and updating your lockfile to ensure consistent installations.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		printer.Gradient("Biz - Package manager 🐼")
 		
-		moduleName, latest, err := validators.ValidateModuleName(args[0])
+		err := registry.ResolveModule(args[0])
 		if err != nil {
 			printer.Error(err.Error())
+			return;
 		}
-
-		module := registry.GetModuleVersionDetails(moduleName, latest)
-
-
-		printer.Gradient("Package acquired successfully " + module.Name + " - " + module.Description)
+		
+		printer.Success("Package acquired successfully")
 	},
 }
 
