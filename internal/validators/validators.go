@@ -3,40 +3,49 @@ package validators
 import (
 	"fmt"
 	"strings"
+
+	"github.com/Masterminds/semver"
 )
 
-func ValidateModuleName(requestedModule string) (string, string, error) {
-	module := strings.TrimSpace(requestedModule)
+func ValidatePkgName(requestedPkg string) (ValidPkgName string, ValidPkgVersion string, NeedsVersionResolution bool, Error error) {
+	pkg := strings.TrimSpace(requestedPkg)
 
-	if len(module) == 0 {
-		return "", "", fmt.Errorf("invalid module name! Please provide the correct name")
+	if len(pkg) == 0 {
+		return "", "", false, fmt.Errorf("invalid package name! Please provide the correct name")
 	}
 
-	lastAt := strings.LastIndex(module, "@")
+	lastAt := strings.LastIndex(pkg, "@")
 
 	// No "@" symbol, e.g., "react"
 	if lastAt == -1 {
-		return module, "latest", nil
+		return pkg, "latest", false, nil
 	}
 
 	// Starts with "@", e.g. "@angular/core"
 	if lastAt == 0 {
 		// This could be just "@" or a scoped package name.
-		// If it's just "@", module[1:] will be empty.
-		if len(module) > 1 {
-			return module, "latest", nil
+		// If it's just "@", pkg[1:] will be empty.
+		if len(pkg) > 1 {
+			return pkg, "latest", false, nil
 		}
-		return "", "", fmt.Errorf("invalid module name! Please provide the correct name")
+		return "", "", false, fmt.Errorf("invalid package name! Please provide the correct name")
 	}
 
 	// "@" is somewhere in the middle or end
-	moduleName := module[:lastAt]
-	moduleVersion := module[lastAt+1:]
+	pkgName := pkg[:lastAt]
+	pkgVersion := pkg[lastAt+1:]
 
-	if len(moduleVersion) == 0 {
-		// Case: "module@"
-		return moduleName, "latest", nil
+	if len(pkgVersion) == 0 {
+		// Case: "pkg@"
+		return pkgName, "latest", false, nil
 	}
-	// Case: "module@version"
-	return moduleName, moduleVersion, nil
+	// Case: "pkg@version"
+	// Now we need to validate the package version
+	_, err := semver.NewVersion(pkgVersion)
+	if err != nil {
+		//Need to resolve this module using semantic versioning constraints
+		return pkgName, pkgVersion, true, nil
+	}
+
+	return pkgName, pkgVersion, false, nil
 }

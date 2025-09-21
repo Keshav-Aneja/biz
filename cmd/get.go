@@ -28,7 +28,7 @@ dependencies, and updating your lockfile to ensure consistent installations.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		printer.Gradient("Biz - Package manager 🐼")
 		
-		err := registry.ResolveModule(args[0])
+		err := registry.ResolvePackage(args[0])
 		if err != nil {
 			printer.Error(err.Error())
 			return;

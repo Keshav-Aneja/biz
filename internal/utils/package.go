@@ -22,7 +22,7 @@ func ReadDependencies(package_name string) ([]string, error) {
 	var package_content PackageDependencies
 	err = json.Unmarshal(package_file, &package_content)
 	if err != nil {
-		return nil, fmt.Errorf("%s", "unable to parse the module details" + err.Error())
+		return nil, fmt.Errorf("%s", "unable to parse the package details" + err.Error())
 	}
 
 	var dependencies = make([]string,0, len(package_content.Dependencies))

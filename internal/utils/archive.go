@@ -14,7 +14,19 @@ import (
 	"github.com/Keshav-Aneja/biz/internal/constants"
 )
 
-func Download(moduleName string, path string) error {
+func DownloadAndExtractPkg (pkgName string, tarball string) error {
+	if err := download(pkgName, tarball); err != nil {
+		return fmt.Errorf("error downloading the package: %w", err)
+	}
+
+	if err := extract(pkgName); err != nil {
+		return fmt.Errorf("error extracting the package: %w", err)
+	}
+
+	return nil
+}
+
+func download(pkgName string, path string) error {
 	tempDirectory := constants.Directories.TEMPORARY
 	err := os.MkdirAll(tempDirectory, os.FileMode(constants.Permissions.DIRECTORY))
 	if err != nil && !os.IsExist(err) {
@@ -27,7 +39,7 @@ func Download(moduleName string, path string) error {
 	}
 	defer file.Body.Close()
 
-	out, err := os.Create(filepath.Join(tempDirectory, moduleName))
+	out, err := os.Create(filepath.Join(tempDirectory, pkgName))
 	if err != nil {
 		return err
 	}
@@ -74,9 +86,9 @@ func removeDirectory(dest string) error {
 * starts extracting all the files and folders from the specific package
 *
 */
-func Extract(moduleName string) error {
-	tgzPath := constants.Directories.TEMPORARY + "/" + moduleName
-	dest := constants.Directories.BIZ_MODULES + "/" + moduleName
+func extract(pkgName string) error {
+	tgzPath := constants.Directories.TEMPORARY + "/" + pkgName
+	dest := constants.Directories.BIZ_MODULES + "/" + pkgName
 	//Setup the directories for extracting
 	if err := setupDirectory(dest); err != nil {
 		return fmt.Errorf("error setting up directories %w", err)
